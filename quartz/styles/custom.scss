@@ -3,9 +3,45 @@
 
 // put your custom CSS here!
 
+.not-desktop {
+  @media all and ($desktop) {
+    display: none !important;
+  }
+}
+
 .explorer-content {
   .folder-outer.open {
     margin-top: 0.3rem;
+  }
+}
+
+@media all and not ($desktop) {
+  .page > #quartz-body .sidebar.right {
+    display: none;
+  }
+
+  .page > #quartz-body .sidebar.left > .not-desktop {
+    width: 100%;
+    min-width: 0;
+    overflow: visible;
+  }
+
+  .page > #quartz-body .sidebar.left > .not-desktop.toc {
+    max-height: none;
+    overflow: visible;
+  }
+
+  .page > #quartz-body .sidebar.left > .not-desktop > .sidebar-panel-header {
+    width: 100%;
+    min-width: 0;
+    justify-content: space-between;
+    overflow: visible;
+  }
+
+  .page > #quartz-body .sidebar.left > .not-desktop > .sidebar-panel-header > h3 {
+    min-width: 0;
+    overflow: visible;
+    white-space: normal;
   }
 }
 
@@ -64,6 +100,7 @@
       align-self: center;
       margin: 0;
       position: static;
+      display: contents;
     }
 
     .sidebar.left > .flex-component {
@@ -106,14 +143,32 @@
     }
 
     .sidebar.left .explorer-content {
-      position: absolute;
-      top: 100%;
-      left: 0;
+      grid-column: 1 / -1;
+      grid-row: 2;
+      position: static;
+      top: auto;
+      left: auto;
       width: 100%;
       max-width: 100%;
-      height: calc(100dvh - 100%);
-      max-height: calc(100dvh - 100%);
-      padding-top: 0;
+      height: auto;
+      max-height: none;
+      padding-top: 0.75rem;
+      transform: none;
+      visibility: visible;
+      overflow: visible;
+      background: transparent;
+    }
+
+    .sidebar.left > .explorer.collapsed > .explorer-content {
+      display: none;
+    }
+
+    .sidebar.left > .explorer:not(.collapsed) > .explorer-content {
+      display: block;
+    }
+
+    .sidebar.left > .not-desktop {
+      grid-column: 1 / -1;
     }
   }
 }

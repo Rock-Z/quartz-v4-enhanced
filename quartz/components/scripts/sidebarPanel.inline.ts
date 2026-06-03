@@ -5,6 +5,10 @@ document.addEventListener("nav", () => {
     const header = panel.querySelector(".sidebar-panel-header")
     if (!(header instanceof HTMLElement)) continue
 
+    if (panel.classList.contains("not-desktop")) {
+      panel.classList.add("collapsed")
+    }
+
     const updateExpandedState = () => {
       const expanded = !panel.classList.contains("collapsed")
       header.setAttribute("aria-expanded", expanded ? "true" : "false")
