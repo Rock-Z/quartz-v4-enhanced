@@ -1,10 +1,10 @@
-import test, { describe } from "node:test"
 import assert from "node:assert"
-import { unified } from "unified"
-import remarkParse from "remark-parse"
+import test, { describe } from "node:test"
 import { Root } from "mdast"
-import { visit } from "unist-util-visit"
-import { Latex } from "./latex"
+import remarkParse from "remark-parse"
+import { unified } from "unified"
+import { VFile } from "vfile"
+import { Latex, normalizeDisplayMath } from "./latex"
 
 const parseLatex = async (markdown: string) => {
   const processor = unified().use(remarkParse)
@@ -12,13 +12,24 @@ const parseLatex = async (markdown: string) => {
     processor.use(plugin as any)
   }
 
-  const tree = processor.parse(markdown)
-  return (await processor.run(tree)) as Root
+  const file = new VFile({ value: markdown })
+  const tree = processor.parse(file)
+  return (await processor.run(tree, file)) as Root
 }
 
 const inlineMathValues = (tree: Root) => {
   const values: string[] = []
-  visit(tree, "inlineMath", (node: { value: string }) => values.push(node.value))
+  const collect = (node: any) => {
+    if (node.type === "inlineMath") {
+      values.push(node.value)
+    }
+
+    for (const child of node.children ?? []) {
+      collect(child)
+    }
+  }
+
+  collect(tree)
   return values
 }
 
@@ -54,5 +65,29 @@ describe("Latex", () => {
     const tree = await parseLatex("$$\nx + y\n$$")
 
     assert.strictEqual(tree.children[0].type, "math")
+  })
+})
+
+describe("normalizeDisplayMath", () => {
+  test("puts multiline display math delimiters on standalone lines", () => {
+    const input = ["before", "$$ x = y", "\\;=\\;", "z,$$", "## after"].join("\n")
+
+    assert.equal(
+      normalizeDisplayMath(input),
+      ["before", "$$", "x = y", "\\;=\\;", "z,", "$$", "## after"].join("\n"),
+    )
+  })
+
+  test("puts single-line display math delimiters on standalone lines", () => {
+    assert.equal(normalizeDisplayMath("$$x + y$$"), ["$$", "x + y", "$$"].join("\n"))
+  })
+
+  test("does not normalize display math markers inside fenced code blocks", () => {
+    const input = ["```md", "$$x + y$$", "```", "$$z$$"].join("\n")
+
+    assert.equal(
+      normalizeDisplayMath(input),
+      ["```md", "$$x + y$$", "```", "$$", "z", "$$"].join("\n"),
+    )
   })
 })

@@ -1,7 +1,8 @@
 import remarkMath from "remark-math"
 import rehypeKatex from "rehype-katex"
 import rehypeMathjax from "rehype-mathjax/svg"
-import { Root, Text } from "mdast"
+import type { Root } from "mdast"
+import type { InlineMath } from "mdast-util-math"
 import { visit } from "unist-util-visit"
 //@ts-ignore
 import rehypeTypst from "@myriaddreamin/rehype-typst"
@@ -25,13 +26,11 @@ interface MacroType {
   [key: string]: string | Args[]
 }
 
-type InlineMath = Text & { type: "inlineMath" }
-
 const unwrapWhitespacePaddedSingleDollarMath = () => {
   return (tree: Root, file: { value: unknown }) => {
     const source = String(file.value)
 
-    visit(tree, "inlineMath", (node: InlineMath, index, parent) => {
+    visit(tree as any, "inlineMath", (node: InlineMath, index: number | undefined, parent: any) => {
       if (
         index === undefined ||
         !parent ||
@@ -55,11 +54,77 @@ const unwrapWhitespacePaddedSingleDollarMath = () => {
   }
 }
 
+export function normalizeDisplayMath(src: string): string {
+  const lines = src.split("\n")
+  const normalized: string[] = []
+  let inDisplayMath = false
+  let fence: string | undefined
+
+  for (const line of lines) {
+    const fenceMatch = line.match(/^ {0,3}(`{3,}|~{3,})/)
+    if (fenceMatch && !inDisplayMath) {
+      const marker = fenceMatch[1][0]
+      if (fence === marker) {
+        fence = undefined
+      } else if (!fence) {
+        fence = marker
+      }
+    }
+
+    if (fence) {
+      normalized.push(line)
+      continue
+    }
+
+    const indent = line.match(/^\s*/)?.[0] ?? ""
+    const trimmed = line.trim()
+
+    if (!inDisplayMath && trimmed.startsWith("$$") && trimmed !== "$$") {
+      let body = trimmed.slice(2).trim()
+      const closesOnSameLine = body.endsWith("$$")
+      if (closesOnSameLine) {
+        body = body.slice(0, -2).trim()
+      }
+
+      normalized.push(`${indent}$$`)
+      if (body) {
+        normalized.push(`${indent}${body}`)
+      }
+      if (closesOnSameLine) {
+        normalized.push(`${indent}$$`)
+      } else {
+        inDisplayMath = true
+      }
+      continue
+    }
+
+    if (inDisplayMath && trimmed.endsWith("$$") && trimmed !== "$$") {
+      const body = trimmed.slice(0, -2).trim()
+      if (body) {
+        normalized.push(`${indent}${body}`)
+      }
+      normalized.push(`${indent}$$`)
+      inDisplayMath = false
+      continue
+    }
+
+    if (trimmed === "$$") {
+      inDisplayMath = !inDisplayMath
+    }
+    normalized.push(line)
+  }
+
+  return normalized.join("\n")
+}
+
 export const Latex: QuartzTransformerPlugin<Partial<Options>> = (opts) => {
   const engine = opts?.renderEngine ?? "katex"
   const macros = opts?.customMacros ?? {}
   return {
     name: "Latex",
+    textTransform(_ctx, src) {
+      return normalizeDisplayMath(src)
+    },
     markdownPlugins() {
       return [remarkMath, unwrapWhitespacePaddedSingleDollarMath]
     },
