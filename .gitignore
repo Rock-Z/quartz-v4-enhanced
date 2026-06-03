@@ -1,11 +1,15 @@
 .DS_Store
-.gitignore
 node_modules
 public
 prof
 tsconfig.tsbuildinfo
 .obsidian
 .quartz-cache
+.npm-cache
+.playwright-browsers
+public-debug
+public-test
+test-results
 private/
 .replit
 replit.nix

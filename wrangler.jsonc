@@ -1,0 +1,11 @@
+{
+  // wrangler.jsonc
+  "name": "quartz-v4-enhanced",
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "compatibility_date": "2026-04-16",
+  "assets": {
+    "directory": "./public",
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "404-page"
+  }
+}
