@@ -669,6 +669,12 @@ document.addEventListener("nav", async (e: CustomEventMap["nav"]) => {
     window.addCleanup(() => icon.removeEventListener("click", renderGlobalGraph))
   })
 
+  const closeButtons = document.getElementsByClassName("global-graph-close")
+  Array.from(closeButtons).forEach((button) => {
+    button.addEventListener("click", hideGlobalGraph)
+    window.addCleanup(() => button.removeEventListener("click", hideGlobalGraph))
+  })
+
   document.addEventListener("keydown", shortcutHandler)
   window.addCleanup(() => {
     document.removeEventListener("keydown", shortcutHandler)

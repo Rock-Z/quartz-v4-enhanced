@@ -3,9 +3,37 @@
 .backlinks {
   flex-direction: column;
 
-  & > h3 {
-    font-size: 1rem;
-    margin: 0;
+  &.collapsed {
+    & > .sidebar-panel-content {
+      display: none;
+    }
+
+    & > .sidebar-panel-header .fold {
+      transform: rotate(-90deg);
+    }
+  }
+
+  & > .sidebar-panel-header {
+    background: transparent;
+    border: none;
+    color: var(--dark);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    padding: 0;
+    text-align: left;
+    width: fit-content;
+
+    & > h3 {
+      font-size: 1rem;
+      margin: 0;
+    }
+
+    & > .fold {
+      margin-left: 0.5rem;
+      opacity: 0.8;
+      transition: transform 0.3s ease;
+    }
   }
 
   & > ul.overflow {
@@ -16,8 +44,16 @@
     overscroll-behavior: contain;
 
     & > li {
+      line-height: 1.2rem;
+
+      & + li {
+        margin-top: 0.35rem;
+      }
+
       & > a {
         background-color: transparent;
+        display: block;
+        line-height: 1.2rem;
       }
     }
   }

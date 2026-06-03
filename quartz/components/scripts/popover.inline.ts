@@ -4,6 +4,7 @@ import { fetchCanonical } from "./util"
 
 const p = new DOMParser()
 let activeAnchor: HTMLAnchorElement | null = null
+const hoverTimers = new WeakMap<HTMLAnchorElement, number>()
 
 async function mouseEnterHandler(
   this: HTMLAnchorElement,
@@ -120,14 +121,49 @@ function clearActivePopover() {
   allPopoverElements.forEach((popoverElement) => popoverElement.classList.remove("active-popover"))
 }
 
+function cancelHoverTimer(link: HTMLAnchorElement) {
+  const timer = hoverTimers.get(link)
+  if (timer !== undefined) {
+    window.clearTimeout(timer)
+    hoverTimers.delete(link)
+  }
+}
+
+function mouseLeaveHandler(this: HTMLAnchorElement) {
+  cancelHoverTimer(this)
+  clearActivePopover()
+}
+
+function clickHandler(this: HTMLAnchorElement) {
+  cancelHoverTimer(this)
+  clearActivePopover()
+}
+
 document.addEventListener("nav", () => {
   const links = [...document.querySelectorAll("a.internal")] as HTMLAnchorElement[]
   for (const link of links) {
-    link.addEventListener("mouseenter", mouseEnterHandler)
-    link.addEventListener("mouseleave", clearActivePopover)
+    const handleMouseEnter = (event: MouseEvent) => {
+      const delay = Number(link.dataset.popoverDelay ?? "0")
+      if (delay > 0) {
+        const timer = window.setTimeout(() => {
+          hoverTimers.delete(link)
+          void mouseEnterHandler.call(link, event)
+        }, delay)
+        hoverTimers.set(link, timer)
+      } else {
+        void mouseEnterHandler.call(link, event)
+      }
+    }
+
+    link.addEventListener("mouseenter", handleMouseEnter)
+    link.addEventListener("mouseleave", mouseLeaveHandler)
+    link.addEventListener("pointerdown", clickHandler)
+    link.addEventListener("click", clickHandler)
     window.addCleanup(() => {
-      link.removeEventListener("mouseenter", mouseEnterHandler)
-      link.removeEventListener("mouseleave", clearActivePopover)
+      link.removeEventListener("mouseenter", handleMouseEnter)
+      link.removeEventListener("mouseleave", mouseLeaveHandler)
+      link.removeEventListener("pointerdown", clickHandler)
+      link.removeEventListener("click", clickHandler)
     })
   }
 })

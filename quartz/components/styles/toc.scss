@@ -9,9 +9,22 @@
   overflow: hidden;
   max-height: var(--toc-panel-height);
   flex: 0 0 auto;
+
+  &.collapsed {
+    & > .sidebar-panel-content {
+      display: none;
+    }
+
+    & > .sidebar-panel-header .fold {
+      transform: rotate(-90deg);
+    }
+  }
 }
 
 .toc-header {
+  background: transparent;
+  border: none;
+  cursor: pointer;
   padding: 0;
   color: var(--dark);
   display: flex;
@@ -19,11 +32,19 @@
   height: var(--toc-header-height);
   min-height: var(--toc-header-height);
   flex: 0 0 var(--toc-header-height);
+  text-align: left;
+  width: fit-content;
 
   & h3 {
     font-size: 1rem;
     display: inline-block;
     margin: 0;
+  }
+
+  & .fold {
+    margin-left: 0.5rem;
+    opacity: 0.8;
+    transition: transform 0.3s ease;
   }
 }
 
@@ -43,12 +64,18 @@ ul.toc-content.overflow {
   & > li > a {
     color: var(--dark);
     opacity: 0.35;
+    display: block;
+    line-height: 1.2rem;
     transition:
       0.5s ease opacity,
       0.3s ease color;
     &.in-view {
       opacity: 0.75;
     }
+  }
+
+  & > li + li {
+    margin-top: 0.35rem;
   }
 
   @for $i from 0 through 6 {

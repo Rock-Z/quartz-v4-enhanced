@@ -1,40 +1,43 @@
 import { QuartzComponent, QuartzComponentConstructor, QuartzComponentProps } from "./types"
 import style from "./styles/backlinks.scss"
 import { resolveRelative, simplifySlug } from "../util/path"
-import { i18n } from "../i18n"
 import { classNames } from "../util/lang"
 import OverflowListFactory from "./OverflowList"
 import { concatenateResources } from "../util/resources"
 // @ts-ignore
 import sidebarPanelScript from "./scripts/sidebarPanel.inline"
 
-interface BacklinksOptions {
+interface ForwardLinksOptions {
   hideWhenEmpty: boolean
 }
 
-const defaultOptions: BacklinksOptions = {
+const defaultOptions: ForwardLinksOptions = {
   hideWhenEmpty: true,
 }
 
-export default ((opts?: Partial<BacklinksOptions>) => {
-  const options: BacklinksOptions = { ...defaultOptions, ...opts }
+export default ((opts?: Partial<ForwardLinksOptions>) => {
+  const options: ForwardLinksOptions = { ...defaultOptions, ...opts }
   const { OverflowList, overflowListAfterDOMLoaded } = OverflowListFactory()
 
-  const Backlinks: QuartzComponent = ({
+  const ForwardLinks: QuartzComponent = ({
     fileData,
     allFiles,
     displayClass,
-    cfg,
   }: QuartzComponentProps) => {
-    const slug = simplifySlug(fileData.slug!)
-    const backlinkFiles = allFiles.filter((file) => file.links?.includes(slug))
-    if (options.hideWhenEmpty && backlinkFiles.length == 0) {
+    const currentSlug = simplifySlug(fileData.slug!)
+    const linkedSlugs = [...new Set((fileData.links ?? []).filter((slug) => slug !== currentSlug))]
+    const linkedFiles = linkedSlugs
+      .map((slug) => allFiles.find((file) => simplifySlug(file.slug!) === slug))
+      .filter((file) => file !== undefined)
+
+    if (options.hideWhenEmpty && linkedFiles.length === 0) {
       return null
     }
+
     return (
-      <div class={classNames(displayClass, "backlinks", "sidebar-panel")}>
+      <div class={classNames(displayClass, "backlinks", "forward-links", "sidebar-panel")}>
         <button type="button" class="sidebar-panel-header">
-          <h3>{i18n(cfg.locale).components.backlinks.title}</h3>
+          <h3>Links</h3>
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="14"
@@ -51,24 +54,28 @@ export default ((opts?: Partial<BacklinksOptions>) => {
           </svg>
         </button>
         <OverflowList class="sidebar-panel-content">
-          {backlinkFiles.length > 0 ? (
-            backlinkFiles.map((f) => (
+          {linkedFiles.length > 0 ? (
+            linkedFiles.map((f) => (
               <li>
-                <a href={resolveRelative(fileData.slug!, f.slug!)} class="internal">
-                  {f.frontmatter?.title}
+                <a
+                  href={resolveRelative(fileData.slug!, f.slug!)}
+                  class="internal"
+                  data-popover-delay="500"
+                >
+                  {f.frontmatter?.title ?? f.slug}
                 </a>
               </li>
             ))
           ) : (
-            <li>{i18n(cfg.locale).components.backlinks.noBacklinksFound}</li>
+            <li>No links found.</li>
           )}
         </OverflowList>
       </div>
     )
   }
 
-  Backlinks.css = style
-  Backlinks.afterDOMLoaded = concatenateResources(sidebarPanelScript, overflowListAfterDOMLoaded)
+  ForwardLinks.css = style
+  ForwardLinks.afterDOMLoaded = concatenateResources(sidebarPanelScript, overflowListAfterDOMLoaded)
 
-  return Backlinks
+  return ForwardLinks
 }) satisfies QuartzComponentConstructor

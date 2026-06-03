@@ -126,10 +126,16 @@ button.desktop-explorer {
       overscroll-behavior: contain;
     }
 
+    & > li + li {
+      margin-top: 0.3rem;
+    }
+
     & li > a {
       color: var(--dark);
       opacity: 0.75;
       pointer-events: all;
+      line-height: 1.2rem;
+      display: block;
 
       &.active {
         opacity: 1;
@@ -171,8 +177,8 @@ button.desktop-explorer {
     font-family: var(--headerFont);
     font-size: 0.95rem;
     font-weight: $semiBoldWeight;
-    line-height: 1.5rem;
-    display: inline-block;
+    line-height: 1.2rem;
+    display: block;
   }
 
   & div > a:hover {
@@ -197,7 +203,7 @@ button.desktop-explorer {
       color: var(--secondary);
       font-weight: $semiBoldWeight;
       margin: 0;
-      line-height: 1.5rem;
+      line-height: 1.2rem;
       pointer-events: none;
     }
   }

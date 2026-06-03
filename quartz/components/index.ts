@@ -14,6 +14,7 @@ import Explorer from "./Explorer"
 import TagList from "./TagList"
 import Graph from "./Graph"
 import Backlinks from "./Backlinks"
+import ForwardLinks from "./ForwardLinks"
 import Search from "./Search"
 import Footer from "./Footer"
 import DesktopOnly from "./DesktopOnly"
@@ -23,8 +24,10 @@ import Breadcrumbs from "./Breadcrumbs"
 import Comments from "./Comments"
 import Flex from "./Flex"
 import ConditionalRender from "./ConditionalRender"
+import BackToTop from "./BackToTop"
 
 export {
+  BackToTop,
   ArticleTitle,
   Content,
   TagContent,
@@ -39,6 +42,7 @@ export {
   Explorer,
   TagList,
   Graph,
+  ForwardLinks,
   Backlinks,
   Search,
   Footer,
