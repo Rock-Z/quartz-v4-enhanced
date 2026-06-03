@@ -1,6 +1,8 @@
 import remarkMath from "remark-math"
 import rehypeKatex from "rehype-katex"
 import rehypeMathjax from "rehype-mathjax/svg"
+import { Root, Text } from "mdast"
+import { visit } from "unist-util-visit"
 //@ts-ignore
 import rehypeTypst from "@myriaddreamin/rehype-typst"
 import { QuartzTransformerPlugin } from "../types"
@@ -23,67 +25,34 @@ interface MacroType {
   [key: string]: string | Args[]
 }
 
-export function normalizeDisplayMath(src: string): string {
-  const lines = src.split("\n")
-  const normalized: string[] = []
-  let inDisplayMath = false
-  let fence: string | undefined
+type InlineMath = Text & { type: "inlineMath" }
 
-  for (const line of lines) {
-    const fenceMatch = line.match(/^ {0,3}(`{3,}|~{3,})/)
-    if (fenceMatch && !inDisplayMath) {
-      const marker = fenceMatch[1][0]
-      if (fence === marker) {
-        fence = undefined
-      } else if (!fence) {
-        fence = marker
-      }
-    }
+const unwrapWhitespacePaddedSingleDollarMath = () => {
+  return (tree: Root, file: { value: unknown }) => {
+    const source = String(file.value)
 
-    if (fence) {
-      normalized.push(line)
-      continue
-    }
-
-    const indent = line.match(/^\s*/)?.[0] ?? ""
-    const trimmed = line.trim()
-
-    if (!inDisplayMath && trimmed.startsWith("$$") && trimmed !== "$$") {
-      let body = trimmed.slice(2).trim()
-      const closesOnSameLine = body.endsWith("$$")
-      if (closesOnSameLine) {
-        body = body.slice(0, -2).trim()
+    visit(tree, "inlineMath", (node: InlineMath, index, parent) => {
+      if (
+        index === undefined ||
+        !parent ||
+        node.position?.start.offset === undefined ||
+        node.position.end.offset === undefined
+      ) {
+        return
       }
 
-      normalized.push(`${indent}$$`)
-      if (body) {
-        normalized.push(`${indent}${body}`)
+      const raw = source.slice(node.position.start.offset, node.position.end.offset)
+      if (
+        raw.startsWith("$") &&
+        raw.endsWith("$") &&
+        !raw.startsWith("$$") &&
+        !raw.endsWith("$$") &&
+        (/\s/.test(raw[1] ?? "") || /\s/.test(raw[raw.length - 2] ?? ""))
+      ) {
+        parent.children[index] = { type: "text", value: raw, position: node.position }
       }
-      if (closesOnSameLine) {
-        normalized.push(`${indent}$$`)
-      } else {
-        inDisplayMath = true
-      }
-      continue
-    }
-
-    if (inDisplayMath && trimmed.endsWith("$$") && trimmed !== "$$") {
-      const body = trimmed.slice(0, -2).trim()
-      if (body) {
-        normalized.push(`${indent}${body}`)
-      }
-      normalized.push(`${indent}$$`)
-      inDisplayMath = false
-      continue
-    }
-
-    if (trimmed === "$$") {
-      inDisplayMath = !inDisplayMath
-    }
-    normalized.push(line)
+    })
   }
-
-  return normalized.join("\n")
 }
 
 export const Latex: QuartzTransformerPlugin<Partial<Options>> = (opts) => {
@@ -91,11 +60,8 @@ export const Latex: QuartzTransformerPlugin<Partial<Options>> = (opts) => {
   const macros = opts?.customMacros ?? {}
   return {
     name: "Latex",
-    textTransform(_ctx, src) {
-      return normalizeDisplayMath(src)
-    },
     markdownPlugins() {
-      return [remarkMath]
+      return [remarkMath, unwrapWhitespacePaddedSingleDollarMath]
     },
     htmlPlugins() {
       switch (engine) {
