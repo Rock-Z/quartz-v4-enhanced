@@ -24,6 +24,47 @@ const isSamePage = (url: URL): boolean => {
   return sameOrigin && samePath
 }
 
+const getHashTarget = (hash: string): HTMLElement | null => {
+  if (!hash) return null
+  return document.getElementById(decodeURIComponent(hash.substring(1)))
+}
+
+const getScrollPaddingTop = () => {
+  const scrollPaddingTop = window.getComputedStyle(document.documentElement).scrollPaddingTop
+  const parsed = Number.parseFloat(scrollPaddingTop)
+  return Number.isFinite(parsed) ? parsed : 0
+}
+
+let hashScrollToken = 0
+
+const scrollToHashTarget = (hash: string, behavior: ScrollBehavior = "auto") => {
+  const el = getHashTarget(hash)
+  if (!el) return false
+
+  const top = Math.max(0, window.scrollY + el.getBoundingClientRect().top - getScrollPaddingTop())
+  window.scrollTo({ top, behavior })
+
+  const token = ++hashScrollToken
+  const settleUntil = performance.now() + 1500
+  const settle = () => {
+    if (token !== hashScrollToken) return
+
+    const liveEl = getHashTarget(hash)
+    if (!liveEl) return
+
+    const delta = liveEl.getBoundingClientRect().top - getScrollPaddingTop()
+    if (Math.abs(delta) <= 4) return
+
+    window.scrollTo({ top: Math.max(0, window.scrollY + delta), behavior: "auto" })
+    if (performance.now() < settleUntil) {
+      window.setTimeout(() => requestAnimationFrame(settle), 50)
+    }
+  }
+
+  requestAnimationFrame(settle)
+  return true
+}
+
 const getOpts = ({ target }: Event): { url: URL; scroll?: boolean } | undefined => {
   if (!isElement(target)) return
   if (target.attributes.getNamedItem("target")?.value === "_blank") return
@@ -107,8 +148,7 @@ async function _navigate(url: URL, isBack: boolean = false) {
   // scroll into place and add history
   if (!isBack) {
     if (url.hash) {
-      const el = document.getElementById(decodeURIComponent(url.hash.substring(1)))
-      el?.scrollIntoView()
+      scrollToHashTarget(url.hash)
     } else {
       window.scrollTo({ top: 0 })
     }
@@ -154,8 +194,7 @@ function createRouter() {
       event.preventDefault()
 
       if (isSamePage(url) && url.hash) {
-        const el = document.getElementById(decodeURIComponent(url.hash.substring(1)))
-        el?.scrollIntoView()
+        scrollToHashTarget(url.hash, "smooth")
         history.pushState({}, "", url)
         return
       }
