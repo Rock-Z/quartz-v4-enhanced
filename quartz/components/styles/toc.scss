@@ -1,50 +1,43 @@
 @use "../../styles/variables.scss" as *;
 
 .toc {
+  --toc-panel-height: 24rem;
+  --toc-header-height: 1.5rem;
   display: flex;
   flex-direction: column;
-  overflow-y: hidden;
-  min-height: 1.4rem;
-  flex: 0 0.5 auto;
-  &:has(button.toc-header.collapsed) {
-    flex: 0 1 1.4rem;
-  }
+  gap: 0.5rem;
+  overflow: hidden;
+  max-height: var(--toc-panel-height);
+  flex: 0 0 auto;
 }
 
-button.toc-header {
-  background-color: transparent;
-  border: none;
-  text-align: left;
-  cursor: pointer;
+.toc-header {
   padding: 0;
   color: var(--dark);
   display: flex;
   align-items: center;
+  height: var(--toc-header-height);
+  min-height: var(--toc-header-height);
+  flex: 0 0 var(--toc-header-height);
 
   & h3 {
     font-size: 1rem;
     display: inline-block;
     margin: 0;
   }
-
-  & .fold {
-    margin-left: 0.5rem;
-    transition: transform 0.3s ease;
-    opacity: 0.8;
-  }
-
-  &.collapsed .fold {
-    transform: rotateZ(-90deg);
-  }
 }
 
 ul.toc-content.overflow {
   list-style: none;
   position: relative;
-  margin: 0.5rem 0;
+  margin: 0;
   padding: 0;
-  max-height: calc(100% - 2rem);
+  max-height: calc(var(--toc-panel-height) - var(--toc-header-height) - 0.5rem);
+  flex: 0 0 auto;
+  overflow-x: hidden;
+  overflow-y: auto;
   overscroll-behavior: contain;
+  scrollbar-gutter: stable;
   list-style: none;
 
   & > li > a {

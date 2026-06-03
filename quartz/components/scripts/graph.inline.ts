@@ -577,17 +577,46 @@ document.addEventListener("nav", async (e: CustomEventMap["nav"]) => {
   const slug = e.detail.url
   addToVisited(simplifySlug(slug))
 
-  async function renderLocalGraph() {
+  async function renderLocalGraph(graphRoot?: HTMLElement) {
     cleanupLocalGraphs()
-    const localGraphContainers = document.getElementsByClassName("graph-container")
+    const localGraphContainers = graphRoot
+      ? [graphRoot.querySelector(".graph-container")].filter(Boolean)
+      : [...document.getElementsByClassName("graph-container")]
+
     for (const container of localGraphContainers) {
       localGraphCleanups.push(await renderGraph(container as HTMLElement, slug))
     }
   }
 
-  await renderLocalGraph()
+  const localGraphs = [...document.getElementsByClassName("graph")] as HTMLElement[]
+  for (const graph of localGraphs) {
+    const header = graph.querySelector(".graph-header")
+    if (!(header instanceof HTMLElement)) continue
+
+    const updateExpandedState = async () => {
+      const expanded = !graph.classList.contains("collapsed")
+      header.setAttribute("aria-expanded", expanded ? "true" : "false")
+      if (expanded) {
+        await renderLocalGraph(graph)
+      } else {
+        cleanupLocalGraphs()
+      }
+    }
+
+    const toggleLocalGraph = () => {
+      graph.classList.toggle("collapsed")
+      void updateExpandedState()
+    }
+
+    header.addEventListener("click", toggleLocalGraph)
+    window.addCleanup(() => header.removeEventListener("click", toggleLocalGraph))
+  }
+
   const handleThemeChange = () => {
-    void renderLocalGraph()
+    const expandedGraph = localGraphs.find((graph) => !graph.classList.contains("collapsed"))
+    if (expandedGraph) {
+      void renderLocalGraph(expandedGraph)
+    }
   }
 
   document.addEventListener("themechange", handleThemeChange)

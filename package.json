@@ -15,8 +15,10 @@
     "quartz": "./quartz/bootstrap-cli.mjs",
     "docs": "npx quartz build --serve -d docs",
     "check": "tsc --noEmit && npx prettier . --check",
+    "check:toc": "PLAYWRIGHT_BROWSERS_PATH=.playwright-browsers node tests/check-toc-scroll.mjs",
     "format": "npx prettier . --write",
     "test": "tsx --test",
+    "test:toc": "PLAYWRIGHT_BROWSERS_PATH=.playwright-browsers playwright test tests/toc-scroll.spec.ts",
     "profile": "0x -D prof ./quartz/bootstrap-cli.mjs build --concurrency=1"
   },
   "engines": {
@@ -98,6 +100,7 @@
     "yargs": "^18.0.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.59.1",
     "@types/d3": "^7.4.3",
     "@types/hast": "^3.0.4",
     "@types/js-yaml": "^4.0.9",

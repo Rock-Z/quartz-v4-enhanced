@@ -64,8 +64,24 @@ export default ((opts?: Partial<GraphOptions>) => {
     const localGraph = { ...defaultOptions.localGraph, ...opts?.localGraph }
     const globalGraph = { ...defaultOptions.globalGraph, ...opts?.globalGraph }
     return (
-      <div class={classNames(displayClass, "graph")}>
-        <h3>{i18n(cfg.locale).components.graph.title}</h3>
+      <div class={classNames(displayClass, "graph", "collapsed")}>
+        <button type="button" class="graph-header" aria-expanded="false">
+          <h3>{i18n(cfg.locale).components.graph.title}</h3>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="fold"
+          >
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </button>
         <div class="graph-outer">
           <div class="graph-container" data-cfg={JSON.stringify(localGraph)}></div>
           <button class="global-graph-icon" aria-label="Global Graph">
